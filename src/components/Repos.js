@@ -1,12 +1,50 @@
 import React, { useContext } from "react";
 import styled from "styled-components";
 import { GithubContext } from "../context/context";
-import { ExampleChart, Pie3D, Column3D, Bar3D, Doughnut2D } from "./Charts";
+import { Pie3D, Column3D, Bar3D, Doughnut2D } from "./Charts";
 
 const Repos = () => {
   const { repos } = useContext(GithubContext);
 
-  return <ExampleChart></ExampleChart>;
+  let languages = repos.reduce((total, item) => {
+    const { language, stargazers_count: stars } = item;
+    if (!language) {
+      return total;
+    }
+    if (!total[language]) {
+      total[language] = { label: language, value: 1, stars };
+    } else {
+      total[language].value++;
+      total[language].stars += stars;
+    }
+    return total;
+  }, {});
+
+  const mostUsed = Object.values(languages)
+    .sort((a, b) => {
+      return b.value - a.value;
+    })
+    .slice(0, 5);
+
+  let mostPopular = Object.values(languages)
+    .sort((a, b) => {
+      return b.stars - a.stars;
+    })
+    .slice(0, 5)
+    .map((item) => {
+      return { ...item, value: item.stars };
+    });
+
+  return (
+    <section className="section">
+      <Wrapper className="section-center">
+        <Pie3D data={mostUsed} />
+        <div></div>
+        <Doughnut2D data={mostPopular} />
+        <div></div>
+      </Wrapper>
+    </section>
+  );
 };
 
 const Wrapper = styled.div`
