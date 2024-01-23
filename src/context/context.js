@@ -7,7 +7,6 @@ import { PropTypes } from "prop-types";
 
 const rootUrl = "https://api.github.com";
 const searchUserUrl = "https://api.github.com/users/";
-// wesbos
 
 const GithubContext = React.createContext();
 
@@ -17,21 +16,35 @@ const GithubProvider = ({ children }) => {
   const [followers, setFollowers] = useState(mockFollowers);
   // request loading
   const [requests, setRequests] = useState(0);
-  const [loading, seIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState({ show: false, msg: "" });
 
   const searchGitHubUser = async (user) => {
     toggleError();
-    // setLoading(true)
+    setIsLoading(true);
     try {
-      const response = await axios(`${searchUserUrl}${user}`);
-      const userData = response.data;
-      console.log(userData);
+      // * user
+      const userResponse = await axios(`${searchUserUrl}${user}`);
+      const userData = userResponse.data;
       setGitHubUser(userData);
+      // * repos
+      const reposResponse = await axios(
+        `https://api.github.com/users/${user}/repos?per_page=100`
+      );
+      const reposData = reposResponse.data;
+      setRepos(reposData);
+      // * followers
+      const followersResponse = await axios(
+        `https://api.github.com/users/${user}/followers`
+      );
+      const followersData = followersResponse.data;
+      setFollowers(followersData);
     } catch (error) {
       console.log(error);
       toggleError(true, "there is no user with that username");
     }
+    setIsLoading(false);
+    checkRequest();
   };
 
   // check rate
@@ -57,7 +70,9 @@ const GithubProvider = ({ children }) => {
     setError({ show, msg });
   }
 
-  useEffect(checkRequest, []);
+  useEffect(() => {
+    searchGitHubUser("carlosazaustre");
+  }, []);
 
   return (
     <GithubContext.Provider
@@ -68,6 +83,7 @@ const GithubProvider = ({ children }) => {
         requests,
         error,
         searchGitHubUser,
+        isLoading,
       }}
     >
       {children}
